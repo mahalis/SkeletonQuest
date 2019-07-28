@@ -239,5 +239,11 @@
 				"Mac"
 			]
 		}
+	],
+	"TargetPlatforms": [
+		"AllDesktop",
+		"HTML5",
+		"MacNoEditor",
+		"WindowsNoEditor"
 	]
 }
