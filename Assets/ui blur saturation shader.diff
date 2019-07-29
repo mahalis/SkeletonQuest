@@ -1,0 +1,38 @@
+--- D:\Software\UE_4.23\Engine\Shaders\Private\SlatePostProcessPixelShader.usf-original
++++ D:\Software\UE_4.23\Engine\Shaders\Private\SlatePostProcessPixelShader.usf
+@@ -43,6 +43,22 @@
+ 		+ Texture2DSample(ElementTexture, ElementTextureSampler, clamp(UV - UVOffset, MinUV, MaxUV)) * Weight;
+ }
+ 
++float3 hsvFromRGB(float3 rgb)
++{
++	const float epsilon = 0.00001;
++	float4 k = float4(0, -1.0 / 3, 2.0 / 3, -1.0);
++	float4 p = lerp(float4(rgb.bg, k.wz), float4(rgb.gb, k.xy), (rgb.b < rgb.g) ? 1 : 0);
++	float4 q = lerp(float4(p.xyw, rgb.r), float4(rgb.r, p.yzx), (p.x < rgb.r) ? 1 : 0);
++	float d = q.x - min(q.w, q.y);
++	return float3(abs(q.z + (q.w - q.y) / (6 * d + epsilon)), d / (q.x + epsilon), q.x);
++}
++
++float3 rgbFromHSV(float3 hsv)
++{
++	float3 hueRGB = saturate(abs(fmod(hsv.x * 6 + float3(0,4,2), 6) - 3) - 1);
++	return float3(hsv.z * lerp(1, hueRGB, hsv.y));
++}
++
+ float4 GaussianBlurMain( FScreenVertexOutput Input ) : SV_Target0
+ {
+ #if 0
+@@ -78,7 +94,10 @@
+ 	}
+ #endif
+ 
+-	return float4(OutColor.rgb, 1);
++	float3 hsv = hsvFromRGB(OutColor);
++	hsv.y = saturate(hsv.y * 2);
++
++	return float4(rgbFromHSV(hsv), 1);
+ }
+ 
+ float4 DownsampleMain(FScreenVertexOutput Input) : SV_Target0
+
